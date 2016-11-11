@@ -1,0 +1,22 @@
+{
+  "name": "rasberrypi_self_driving_car",
+  "version": "1.0.0",
+  "description": "Rasberry Pi Self Driving Car",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nojvek/RasberryPiSelfDrivingCar.git"
+  },
+  "author": "nojvek",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nojvek/RasberryPiSelfDrivingCar/issues"
+  },
+  "homepage": "https://github.com/nojvek/RasberryPiSelfDrivingCar#readme",
+  "devDependencies": {
+    "noice-json-rpc": "^1.0.0",
+    "preact": "^6.4.0",
+    "rollup": "^0.36.3",
+    "ws": "^1.1.1"
+  }
+}
