@@ -12,5 +12,9 @@
 
 [Wireless mini keyboard](https://www.amazon.com/gp/product/B01CE70TZC/ref=oh_aui_detailpage_o02_s01?ie=UTF8&psc=1)
 
+And good old electrical tape 
 
 ## Screenshots
+![](screenshots/IMG_0928.JPG)
+![](screenshots/IMG_0929.JPG)
+![](screenshots/IMG_0930.JPG)
