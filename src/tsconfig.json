@@ -1,0 +1,12 @@
+{
+    "compileOnSave": true,
+    "compilerOptions": {
+        "module": "none",
+        "target": "es6",
+        "jsx": "react",
+        "reactNamespace": "preact",
+        "moduleResolution": "node",
+        "types": [
+        ]
+    }
+}
