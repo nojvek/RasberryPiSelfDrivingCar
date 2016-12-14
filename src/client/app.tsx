@@ -1,6 +1,8 @@
-window["require"] = (module: string) => window[module]
+import {h, render, Component} from 'preact'
 
-import {render, Component} from 'preact'
+interface UITouchEvent extends MouseEvent {
+    targetTouches: { pageX: number; pageY: number; screenX: number, screenY: number }[];
+}
 
 class AppState {
     // 0 - straight, -1 = left, 1 = right
@@ -8,6 +10,9 @@ class AppState {
 
     // 0 - stop, 1 - full
     speed: number = 0
+
+    // Distance in cm of front radar
+    frontRadarDistance: number = 100
 }
 
 
@@ -31,12 +36,12 @@ class AppView extends Component<never, AppState> {
     componentWillUnmount() {
     }
 
-    onGasPedalMouseDown(ev: MouseEvent) {
-        const startY = ev.screenY || event.targetTouches[0].screenY
+    onGasPedalMouseDown(ev: UITouchEvent) {
+        const startY = ev.screenY || ev.targetTouches[0].screenY
         const maxY = window.innerHeight
 
-        const onMouseMove = (ev: MouseEvent) => {
-            const yNow = event.targetTouches[0].screenY
+        const onMouseMove = (ev: UITouchEvent) => {
+            const yNow = ev.screenY || ev.targetTouches[0].screenY
             this.state.speed = (startY - yNow)/ maxY
             this.setState(null)
             ev.preventDefault()

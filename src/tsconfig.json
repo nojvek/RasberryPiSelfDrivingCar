@@ -1,11 +1,12 @@
 {
     "compileOnSave": true,
     "compilerOptions": {
-        "module": "none",
-        "target": "es5",
+        "module": "amd",
+        "target": "es6",
         "jsx": "react",
-        "reactNamespace": "preact",
+        "jsxFactory": "h",
         "moduleResolution": "node",
+        "outFile": "../www/app.js",
         "types": [
         ]
     }
