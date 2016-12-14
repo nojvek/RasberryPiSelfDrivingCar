@@ -22,27 +22,38 @@ class AppView extends Component<never, AppState> {
     }
 
     componentDidMount() {
-
+        window.addEventListener("deviceorientation", (ev: DeviceOrientationEvent) => {
+            this.state.steeringAngle = (ev.alpha / 180)
+            this.setState(null)
+        })
     }
 
     componentWillUnmount() {
     }
 
     onGasPedalMouseDown(ev: MouseEvent) {
-        const startY = ev.screenY
+        const startY = ev.screenY || event.targetTouches[0].screenY
         const maxY = window.innerHeight
 
         const onMouseMove = (ev: MouseEvent) => {
-            this.state.speed = (startY - ev.screenY)/ maxY
+            const yNow = event.targetTouches[0].screenY
+            this.state.speed = (startY - yNow)/ maxY
             this.setState(null)
+            ev.preventDefault()
         }
 
-        document.addEventListener("mousemove", onMouseMove)
-        document.addEventListener("mouseup", () => {
+        const onMouseUp = () => {
             this.state.speed = 0
             this.setState(null)
             document.removeEventListener("mousemove", onMouseMove)
-        })
+            document.removeEventListener("touchmove", onMouseMove)
+        }
+
+        document.addEventListener("mousemove", onMouseMove)
+        document.addEventListener("touchmove", onMouseMove)
+
+        document.addEventListener("mouseup", onMouseUp)
+        document.addEventListener("touchend", onMouseUp)
     }
 
     render(props, state: AppState) {
@@ -66,7 +77,7 @@ class AppView extends Component<never, AppState> {
             backgroundSize: "cover",
             width: 100,
             height: 100,
-            transform: `rotate(${state.steeringAngle * 90}deg)`,
+            transform: `rotate(${state.steeringAngle * 180}deg)`,
         }
 
         const gasPedalStyle = Object.assign({}, steeringWheelStyle, {
@@ -81,7 +92,11 @@ class AppView extends Component<never, AppState> {
             <div class='appView' style={appStyle}>
                 <div style={cameraStyle}></div>
                 <div style={steeringWheelStyle}></div>
-                <div style={gasPedalStyle} ref={el => this.gasPedalElem = el} onMouseDown={this.onGasPedalMouseDown.bind(this)}></div>
+                <div style={gasPedalStyle}
+                    ref={el => this.gasPedalElem = el}
+                    onTouchStart={this.onGasPedalMouseDown.bind(this)}
+                    onMouseDown={this.onGasPedalMouseDown.bind(this)}>
+                </div>
             </div>
         )
     }
