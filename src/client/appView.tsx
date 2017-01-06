@@ -1,34 +1,26 @@
-import {h, render, Component} from 'preact'
+import {h, Component} from 'preact'
+import {appState} from './appState'
 
 interface UITouchEvent extends MouseEvent {
     targetTouches: { pageX: number; pageY: number; screenX: number, screenY: number }[];
 }
 
-class AppState {
-    // 0 - straight, -1 = left, 1 = right
-    steeringAngle: number = 0
-
-    // 0 - stop, 1 - full
-    speed: number = 0
-
-    // Distance in cm of front radar
-    frontRadarDistance: number = 100
-}
-
-
-class AppView extends Component<never, AppState> {
-    state: AppState
-
+export class AppView extends Component<never, any> {
     private gasPedalElem: Element
 
     constructor() {
         super()
-        this.state = new AppState()
     }
 
     componentDidMount() {
         window.addEventListener("deviceorientation", (ev: DeviceOrientationEvent) => {
-            this.state.steeringAngle = (ev.alpha / 180)
+            let angle = ev.beta // from 0 - 30 = 0 to 1, 330 - 360 = -1 to 0
+            if (angle > 180) angle -= 180 // we need from -180 to 180.
+            angle = angle / 30 // 30 = 1
+            if (angle > 1) angle = 1
+            if (angle < -1) angle = -1 // cap between -1 and 1
+
+            appState.steeringAngle = angle
             this.setState(null)
         })
     }
@@ -38,17 +30,17 @@ class AppView extends Component<never, AppState> {
 
     onGasPedalMouseDown(ev: UITouchEvent) {
         const startY = ev.screenY || ev.targetTouches[0].screenY
-        const maxY = window.innerHeight
+        const maxY = window.innerHeight * 0.8
 
         const onMouseMove = (ev: UITouchEvent) => {
             const yNow = ev.screenY || ev.targetTouches[0].screenY
-            this.state.speed = (startY - yNow)/ maxY
+            appState.speed = (startY - yNow)/ maxY
             this.setState(null)
             ev.preventDefault()
         }
 
         const onMouseUp = () => {
-            this.state.speed = 0
+            appState.speed = 0
             this.setState(null)
             document.removeEventListener("mousemove", onMouseMove)
             document.removeEventListener("touchmove", onMouseMove)
@@ -59,9 +51,11 @@ class AppView extends Component<never, AppState> {
 
         document.addEventListener("mouseup", onMouseUp)
         document.addEventListener("touchend", onMouseUp)
+
+        ev.preventDefault()
     }
 
-    render(props, state: AppState) {
+    render() {
         const assetsDir = "assets"
         const appStyle = {
             position: "relative",
@@ -82,7 +76,7 @@ class AppView extends Component<never, AppState> {
             backgroundSize: "cover",
             width: 100,
             height: 100,
-            transform: `rotate(${state.steeringAngle * 180}deg)`,
+            transform: `rotate(${appState.steeringAngle * 180}deg)`,
         }
 
         const gasPedalStyle = Object.assign({}, steeringWheelStyle, {
@@ -90,11 +84,12 @@ class AppView extends Component<never, AppState> {
             left: null,
             width: 110,
             backgroundImage: `url(${assetsDir}/gasPedal.png)`,
-            transform: `translate(0, ${state.speed * -window.innerHeight}px)`,
+            transform: `translate(0, ${appState.speed * -window.innerHeight}px)`,
         })
 
         return (
             <div class='appView' style={appStyle}>
+                <div>Steering: {Math.round(appState.steeringAngle * 100)} Speed: {Math.round(appState.speed * 100)} </div>
                 <div style={cameraStyle}></div>
                 <div style={steeringWheelStyle}></div>
                 <div style={gasPedalStyle}
@@ -106,8 +101,3 @@ class AppView extends Component<never, AppState> {
         )
     }
 }
-
-// render an instance of Clock into <body>:
-window.addEventListener("DOMContentLoaded", () => {
-    render(<AppView />, document.body)
-})
