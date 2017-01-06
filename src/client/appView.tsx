@@ -25,9 +25,6 @@ export class AppView extends Component<never, any> {
         })
     }
 
-    componentWillUnmount() {
-    }
-
     onGasPedalMouseDown(ev: UITouchEvent) {
         const startY = ev.screenY || ev.targetTouches[0].screenY
         const maxY = window.innerHeight * 0.8
