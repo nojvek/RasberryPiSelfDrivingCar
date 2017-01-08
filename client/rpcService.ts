@@ -1,5 +1,24 @@
 //import {Client} from 'noice-json-rpc'
 
+const ws = new WebSocket(`ws://${location.host}/ws`)
+const debounceInterval = 20 //ms
+let lastSendTime = 0
+
+
+const sendMessage = (method:string, params: any, debounce = false) => {
+    const msgStr = JSON.stringify({method, params})
+    if (!debounce) {
+        ws.send(msgStr);
+    }
+    else {
+        const curTime = new Date().getTime();
+        if ((curTime - lastSendTime) > debounceInterval) {
+            ws.send(msgStr)
+            lastSendTime = curTime
+        }
+    }
+}
+
 export interface PiBotClient {
     onRadarDistance(handler: (params: {distance: number}) => void): void;
     setSteeringAngle(params: {angle: number}): void
@@ -7,22 +26,17 @@ export interface PiBotClient {
     setChillPill(params: {value: boolean}): void
 }
 
-const ws = new WebSocket(`ws://${location.host}`)
-
 export const rpc: PiBotClient = {
     setSteeringAngle(params) {
-        ws.send(JSON.stringify({method: "setSteeringAngle", params}))
+        sendMessage("setSteeringAngle", params, true)
     },
     setThrottle(params) {
-        ws.send(JSON.stringify({method: "setThrottle", params}))
+        sendMessage("setThrottle", params, true)
     },
     setChillPill(params) {
-        ws.send(JSON.stringify({method: "setChillPill", params}))
+        sendMessage("setChillPill", params)
     },
     onRadarDistance(handler) {
 
     }
 }
-
-//export const rpc:PiBotClient = new Client(<any>new WebSocket(location.host), {logConsole: true}).api(true)
-

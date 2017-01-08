@@ -1,21 +1,32 @@
 import os
 import sys
+import json
 from argparse import ArgumentParser
 from tornado import websocket, web, ioloop
+from picar import control, vision
 
 
 root_dir = os.path.dirname(os.path.realpath(__file__))
+controlService = control.ControlService()
 
 
 class WebSocketHandler(websocket.WebSocketHandler):
+    # Only allow one websocket at a time
+    ws_client = None
+
     def on_message(self, message):
-        self.write_message(u"Your message was: " + message)
+        msg = json.loads(message)
+        controlService.handle_rpc_msg(msg)
+
+    def check_origin(self, origin):
+        return WebSocketHandler.ws_client == None
 
     def open(self):
-        pass
+        if not WebSocketHandler.ws_client:
+            WebSocketHandler.ws_client = self
 
     def on_close(self):
-        pass
+        WebSocketHandler.ws_client = None
 
 
 def start_server(port, root_dir):

@@ -12,22 +12,36 @@ define("appState", ["require", "exports"], function (require, exports) {
 //import {Client} from 'noice-json-rpc'
 define("rpcService", ["require", "exports"], function (require, exports) {
     "use strict";
-    const ws = new WebSocket(`ws://${location.host}`);
+    const ws = new WebSocket(`ws://${location.host}/ws`);
+    const debounceInterval = 20; //ms
+    let lastSendTime = 0;
+    const sendMessage = (method, params, debounce = false) => {
+        const msgStr = JSON.stringify({ method, params });
+        if (!debounce) {
+            ws.send(msgStr);
+        }
+        else {
+            const curTime = new Date().getTime();
+            if ((curTime - lastSendTime) > debounceInterval) {
+                ws.send(msgStr);
+                lastSendTime = curTime;
+            }
+        }
+    };
     exports.rpc = {
         setSteeringAngle(params) {
-            ws.send(JSON.stringify({ method: "setSteeringAngle", params }));
+            sendMessage("setSteeringAngle", params, true);
         },
         setThrottle(params) {
-            ws.send(JSON.stringify({ method: "setThrottle", params }));
+            sendMessage("setThrottle", params, true);
         },
         setChillPill(params) {
-            ws.send(JSON.stringify({ method: "setChillPill", params }));
+            sendMessage("setChillPill", params);
         },
         onRadarDistance(handler) {
         }
     };
 });
-//export const rpc:PiBotClient = new Client(<any>new WebSocket(location.host), {logConsole: true}).api(true)
 define("appView", ["require", "exports", "preact", "appState", "rpcService"], function (require, exports, preact_1, appState_1, rpcService_1) {
     "use strict";
     class AppView extends preact_1.Component {
@@ -39,19 +53,21 @@ define("appView", ["require", "exports", "preact", "appState", "rpcService"], fu
                 let angle = ev.beta; // from 0 - 30 = 0 to 1, 330 - 360 = -1 to 0
                 if (angle > 180)
                     angle -= 180; // we need from -180 to 180.
-                angle = angle / 30; // 30 = 1
+                angle = angle / 15; // 30 = 1
                 if (angle > 1)
                     angle = 1;
                 if (angle < -1)
                     angle = -1; // cap between -1 and 1
                 appState_1.appState.steeringAngle = angle;
-                rpcService_1.rpc.setSteeringAngle({ angle });
+                if (appState_1.appState.throttle !== 0) {
+                    rpcService_1.rpc.setSteeringAngle({ angle });
+                }
                 this.setState(null);
             });
         }
         onGasPedalMouseDown(ev) {
             const startY = ev.screenY || ev.targetTouches[0].screenY;
-            const maxY = window.innerHeight * 0.8;
+            const maxY = window.innerHeight * 0.6;
             const onMouseMove = (ev) => {
                 const yNow = ev.screenY || ev.targetTouches[0].screenY;
                 appState_1.appState.throttle = (startY - yNow) / maxY;
@@ -85,13 +101,13 @@ define("appView", ["require", "exports", "preact", "appState", "rpcService"], fu
             };
             const steeringWheelStyle = {
                 position: "absolute",
-                bottom: 50,
+                bottom: 150,
                 left: 50,
                 backgroundImage: `url(${assetsDir}/steeringWheel.png)`,
                 backgroundSize: "cover",
                 width: 100,
                 height: 100,
-                transform: `rotate(${appState_1.appState.steeringAngle * 180}deg)`,
+                transform: `rotate(${appState_1.appState.steeringAngle * 90}deg)`,
             };
             const gasPedalStyle = Object.assign({}, steeringWheelStyle, {
                 right: 50,
@@ -101,7 +117,7 @@ define("appView", ["require", "exports", "preact", "appState", "rpcService"], fu
                 transform: `translate(0, ${appState_1.appState.throttle * -window.innerHeight}px)`,
             });
             return (preact_1.h("div", { class: 'appView', style: appStyle },
-                preact_1.h("div", null,
+                preact_1.h("div", { style: { position: 'absolute' } },
                     "Steering: ",
                     Math.round(appState_1.appState.steeringAngle * 100),
                     " Speed: ",

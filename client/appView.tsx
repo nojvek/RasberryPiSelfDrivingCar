@@ -18,19 +18,23 @@ export class AppView extends Component<never, any> {
         window.addEventListener("deviceorientation", (ev: DeviceOrientationEvent) => {
             let angle = ev.beta // from 0 - 30 = 0 to 1, 330 - 360 = -1 to 0
             if (angle > 180) angle -= 180 // we need from -180 to 180.
-            angle = angle / 30 // 30 = 1
+            angle = angle / 15 // 30 = 1
             if (angle > 1) angle = 1
             if (angle < -1) angle = -1 // cap between -1 and 1
 
             appState.steeringAngle = angle
-            rpc.setSteeringAngle({angle})
+
+            if (appState.throttle !== 0) {
+                rpc.setSteeringAngle({angle})
+            }
+
             this.setState(null)
         })
     }
 
     onGasPedalMouseDown(ev: UITouchEvent) {
         const startY = ev.screenY || ev.targetTouches[0].screenY
-        const maxY = window.innerHeight * 0.8
+        const maxY = window.innerHeight * 0.6
 
         const onMouseMove = (ev: UITouchEvent) => {
             const yNow = ev.screenY || ev.targetTouches[0].screenY
@@ -72,13 +76,13 @@ export class AppView extends Component<never, any> {
 
         const steeringWheelStyle = {
             position: "absolute",
-            bottom: 50,
+            bottom: 150,
             left: 50,
             backgroundImage: `url(${assetsDir}/steeringWheel.png)`,
             backgroundSize: "cover",
             width: 100,
             height: 100,
-            transform: `rotate(${appState.steeringAngle * 180}deg)`,
+            transform: `rotate(${appState.steeringAngle * 90}deg)`,
         }
 
         const gasPedalStyle = Object.assign({}, steeringWheelStyle, {
@@ -91,7 +95,7 @@ export class AppView extends Component<never, any> {
 
         return (
             <div class='appView' style={appStyle}>
-                <div>Steering: {Math.round(appState.steeringAngle * 100)} Speed: {Math.round(appState.throttle * 100)} </div>
+                <div style={{position: 'absolute'}}>Steering: {Math.round(appState.steeringAngle * 100)} Speed: {Math.round(appState.throttle * 100)} </div>
                 <div style={cameraStyle}></div>
                 <div style={steeringWheelStyle}></div>
                 <div style={gasPedalStyle}
