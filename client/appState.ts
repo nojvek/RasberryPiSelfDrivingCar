@@ -3,7 +3,7 @@ export const appState = {
     steeringAngle: 0,
 
     // 0 - stop, 1 - full
-    speed: 0,
+    throttle: 0,
 
     // Distance in cm of front radar
     frontRadarDistance: 100

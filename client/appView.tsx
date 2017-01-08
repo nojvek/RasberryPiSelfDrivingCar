@@ -1,5 +1,7 @@
 import {h, Component} from 'preact'
 import {appState} from './appState'
+import {rpc} from './rpcService'
+
 
 interface UITouchEvent extends MouseEvent {
     targetTouches: { pageX: number; pageY: number; screenX: number, screenY: number }[];
@@ -21,6 +23,7 @@ export class AppView extends Component<never, any> {
             if (angle < -1) angle = -1 // cap between -1 and 1
 
             appState.steeringAngle = angle
+            rpc.setSteeringAngle({angle})
             this.setState(null)
         })
     }
@@ -31,14 +34,16 @@ export class AppView extends Component<never, any> {
 
         const onMouseMove = (ev: UITouchEvent) => {
             const yNow = ev.screenY || ev.targetTouches[0].screenY
-            appState.speed = (startY - yNow)/ maxY
+            appState.throttle = (startY - yNow)/ maxY
             this.setState(null)
+            rpc.setThrottle({throttle: appState.throttle})
             ev.preventDefault()
         }
 
         const onMouseUp = () => {
-            appState.speed = 0
+            appState.throttle = 0
             this.setState(null)
+            rpc.setThrottle({throttle: appState.throttle})
             document.removeEventListener("mousemove", onMouseMove)
             document.removeEventListener("touchmove", onMouseMove)
         }
@@ -81,12 +86,12 @@ export class AppView extends Component<never, any> {
             left: null,
             width: 110,
             backgroundImage: `url(${assetsDir}/gasPedal.png)`,
-            transform: `translate(0, ${appState.speed * -window.innerHeight}px)`,
+            transform: `translate(0, ${appState.throttle * -window.innerHeight}px)`,
         })
 
         return (
             <div class='appView' style={appStyle}>
-                <div>Steering: {Math.round(appState.steeringAngle * 100)} Speed: {Math.round(appState.speed * 100)} </div>
+                <div>Steering: {Math.round(appState.steeringAngle * 100)} Speed: {Math.round(appState.throttle * 100)} </div>
                 <div style={cameraStyle}></div>
                 <div style={steeringWheelStyle}></div>
                 <div style={gasPedalStyle}

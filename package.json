@@ -14,10 +14,14 @@
   },
   "homepage": "https://github.com/nojvek/RasberryPiSelfDrivingCar#readme",
   "devDependencies": {
+    "ecstatic": "^2.1.0",
+    "events": "^1.1.1",
+    "express": "^4.14.0",
     "noice-json-rpc": "^1.0.0",
     "preact": "^6.4.0",
     "rollup": "^0.36.3",
     "tsc-amd-loader": "^0.9.0",
+    "typescript-require": "^0.2.9-1",
     "ws": "^1.1.1"
   }
 }

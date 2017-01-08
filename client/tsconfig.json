@@ -6,7 +6,7 @@
         "jsx": "react",
         "jsxFactory": "h",
         "moduleResolution": "node",
-        "outFile": "../www/app.js",
+        "outFile": "client.js",
         "types": [
         ]
     }

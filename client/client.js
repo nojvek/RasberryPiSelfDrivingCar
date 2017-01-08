@@ -4,12 +4,31 @@ define("appState", ["require", "exports"], function (require, exports) {
         // 0 - straight, -1 = left, 1 = right
         steeringAngle: 0,
         // 0 - stop, 1 - full
-        speed: 0,
+        throttle: 0,
         // Distance in cm of front radar
         frontRadarDistance: 100
     };
 });
-define("appView", ["require", "exports", "preact", "appState"], function (require, exports, preact_1, appState_1) {
+//import {Client} from 'noice-json-rpc'
+define("rpcService", ["require", "exports"], function (require, exports) {
+    "use strict";
+    const ws = new WebSocket(`ws://${location.host}`);
+    exports.rpc = {
+        setSteeringAngle(params) {
+            ws.send(JSON.stringify({ method: "setSteeringAngle", params }));
+        },
+        setThrottle(params) {
+            ws.send(JSON.stringify({ method: "setThrottle", params }));
+        },
+        setChillPill(params) {
+            ws.send(JSON.stringify({ method: "setChillPill", params }));
+        },
+        onRadarDistance(handler) {
+        }
+    };
+});
+//export const rpc:PiBotClient = new Client(<any>new WebSocket(location.host), {logConsole: true}).api(true)
+define("appView", ["require", "exports", "preact", "appState", "rpcService"], function (require, exports, preact_1, appState_1, rpcService_1) {
     "use strict";
     class AppView extends preact_1.Component {
         constructor() {
@@ -26,23 +45,24 @@ define("appView", ["require", "exports", "preact", "appState"], function (requir
                 if (angle < -1)
                     angle = -1; // cap between -1 and 1
                 appState_1.appState.steeringAngle = angle;
+                rpcService_1.rpc.setSteeringAngle({ angle });
                 this.setState(null);
             });
-        }
-        componentWillUnmount() {
         }
         onGasPedalMouseDown(ev) {
             const startY = ev.screenY || ev.targetTouches[0].screenY;
             const maxY = window.innerHeight * 0.8;
             const onMouseMove = (ev) => {
                 const yNow = ev.screenY || ev.targetTouches[0].screenY;
-                appState_1.appState.speed = (startY - yNow) / maxY;
+                appState_1.appState.throttle = (startY - yNow) / maxY;
                 this.setState(null);
+                rpcService_1.rpc.setThrottle({ throttle: appState_1.appState.throttle });
                 ev.preventDefault();
             };
             const onMouseUp = () => {
-                appState_1.appState.speed = 0;
+                appState_1.appState.throttle = 0;
                 this.setState(null);
+                rpcService_1.rpc.setThrottle({ throttle: appState_1.appState.throttle });
                 document.removeEventListener("mousemove", onMouseMove);
                 document.removeEventListener("touchmove", onMouseMove);
             };
@@ -78,14 +98,14 @@ define("appView", ["require", "exports", "preact", "appState"], function (requir
                 left: null,
                 width: 110,
                 backgroundImage: `url(${assetsDir}/gasPedal.png)`,
-                transform: `translate(0, ${appState_1.appState.speed * -window.innerHeight}px)`,
+                transform: `translate(0, ${appState_1.appState.throttle * -window.innerHeight}px)`,
             });
             return (preact_1.h("div", { class: 'appView', style: appStyle },
                 preact_1.h("div", null,
                     "Steering: ",
                     Math.round(appState_1.appState.steeringAngle * 100),
                     " Speed: ",
-                    Math.round(appState_1.appState.speed * 100),
+                    Math.round(appState_1.appState.throttle * 100),
                     " "),
                 preact_1.h("div", { style: cameraStyle }),
                 preact_1.h("div", { style: steeringWheelStyle }),
@@ -96,5 +116,12 @@ define("appView", ["require", "exports", "preact", "appState"], function (requir
 });
 define("main", ["require", "exports", "preact", "appView"], function (require, exports, preact_2, appView_1) {
     "use strict";
-    preact_2.render(preact_2.h(appView_1.AppView, null), document.body);
+    const load = () => preact_2.render(preact_2.h(appView_1.AppView, null), document.body);
+    // Safari fires DomContentLoaded too early
+    if (document.body) {
+        load();
+    }
+    else {
+        document.addEventListener("DOMContentLoaded", load);
+    }
 });
