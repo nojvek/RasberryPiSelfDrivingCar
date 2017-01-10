@@ -2,36 +2,70 @@ import os
 import sys
 import json
 from argparse import ArgumentParser
-from tornado import websocket, web, ioloop
-from picar import control, vision
+from tornado import websocket, web, ioloop, gen
+from pibot import control, vision
 
 
 root_dir = os.path.dirname(os.path.realpath(__file__))
-controlService = control.ControlService()
+control_service = control.ControlService()
+vision_service = vision.VisionService()
+
+class VideoHandler(web.RequestHandler):
+    connected = False
+
+    @web.asynchronous
+    @gen.coroutine
+    def get(self):
+        if VideoHandler.connected:
+            self.send_status(406, "Not available")
+            self.write("Video stream already in use")
+            return
+
+        VideoHandler.connected = True
+        vision_service.start()
+        loop = ioloop.IOLoop.current()
+        boundary = "--boundarydonotcross"
+
+        self.set_header('Cache-Control', 'no-cache, must-revalidate, max-age=0')
+        self.set_header('Connection', 'close')
+        self.set_header('Content-Type', 'multipart/x-mixed-replace;boundary=' + boundary)
+
+        while VideoHandler.connected:
+            img = vision_service.get_frame()
+            self.write(boundary + '\r\n')
+            self.write("Content-type: image/jpeg\r\n")
+            self.write("Content-length: %s\r\n\r\n" % len(img))
+            self.write(img)
+            self.flush()
+            yield gen.Task(loop.call_later, 0.01)
+
+    def on_connection_close(self):
+        VideoHandler.connected = False
+        vision_service.stop()
 
 
 class WebSocketHandler(websocket.WebSocketHandler):
     # Only allow one websocket at a time
-    ws_client = None
+    connected = False
 
     def on_message(self, message):
         msg = json.loads(message)
-        controlService.handle_rpc_msg(msg)
+        control_service.handle_rpc_msg(msg)
 
     def check_origin(self, origin):
-        return WebSocketHandler.ws_client == None
+        return not WebSocketHandler.connected
 
     def open(self):
-        if not WebSocketHandler.ws_client:
-            WebSocketHandler.ws_client = self
+        WebSocketHandler.connected = True
 
     def on_close(self):
-        WebSocketHandler.ws_client = None
+        WebSocketHandler.connected = False
 
 
 def start_server(port, root_dir):
     app = web.Application([
         (r'/ws', WebSocketHandler),
+        (r'/video', VideoHandler),
         (r'/(.*)', web.StaticFileHandler, {
             'path': root_dir,
             'default_filename': 'index.html'

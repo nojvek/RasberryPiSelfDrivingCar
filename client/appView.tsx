@@ -68,10 +68,17 @@ export class AppView extends Component<never, any> {
             overflow: "hidden",
         }
 
-        const cameraStyle = {
+        const cameraBgStyle = {
             width: "100vw",
             height: "100vh",
             backgroundColor: "#ccc"
+        }
+
+        const cameraStyle = {
+            width: 640,
+            height: 480,
+            display: "block",
+            margin: "auto"
         }
 
         const steeringWheelStyle = {
@@ -96,7 +103,9 @@ export class AppView extends Component<never, any> {
         return (
             <div class='appView' style={appStyle}>
                 <div style={{position: 'absolute'}}>Steering: {Math.round(appState.steeringAngle * 100)} Speed: {Math.round(appState.throttle * 100)} </div>
-                <div style={cameraStyle}></div>
+                <div style={cameraBgStyle}>
+                    <img style={cameraStyle} src="/video"></img>
+                </div>
                 <div style={steeringWheelStyle}></div>
                 <div style={gasPedalStyle}
                     ref={el => this.gasPedalElem = el}

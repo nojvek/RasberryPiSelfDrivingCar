@@ -94,10 +94,16 @@ define("appView", ["require", "exports", "preact", "appState", "rpcService"], fu
                 position: "relative",
                 overflow: "hidden",
             };
-            const cameraStyle = {
+            const cameraBgStyle = {
                 width: "100vw",
                 height: "100vh",
                 backgroundColor: "#ccc"
+            };
+            const cameraStyle = {
+                width: 640,
+                height: 480,
+                display: "block",
+                margin: "auto"
             };
             const steeringWheelStyle = {
                 position: "absolute",
@@ -123,7 +129,8 @@ define("appView", ["require", "exports", "preact", "appState", "rpcService"], fu
                     " Speed: ",
                     Math.round(appState_1.appState.throttle * 100),
                     " "),
-                preact_1.h("div", { style: cameraStyle }),
+                preact_1.h("div", { style: cameraBgStyle },
+                    preact_1.h("img", { style: cameraStyle, src: "/video" })),
                 preact_1.h("div", { style: steeringWheelStyle }),
                 preact_1.h("div", { style: gasPedalStyle, ref: el => this.gasPedalElem = el, onTouchStart: this.onGasPedalMouseDown.bind(this), onMouseDown: this.onGasPedalMouseDown.bind(this) })));
         }
